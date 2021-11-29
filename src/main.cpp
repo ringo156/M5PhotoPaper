@@ -27,6 +27,8 @@ M5EPD_Canvas canvas(&M5.EPD);
 uint8_t pic_i = 0;
 
 String host = "www.googleapis.com";
+String dirId = "'your Google Drive Dir ID'";
+String access_token = "";
 
 void setup()
 {
@@ -85,7 +87,7 @@ String get_access_token(void)
 
 void drive_get(void)
 {
-    access_token = get_access_token();
+    // access_token = get_access_token();
     // Serial.println(access_token);
 
     WiFiClientSecure *client = new WiFiClientSecure;
@@ -95,7 +97,8 @@ void drive_get(void)
         {
             HTTPClient https;
             Serial.println("HTTPS GET");
-            String postData = "?q='directoryID'+in+parents";
+            String postData = "?q=" + dirId + "+in+parents";
+
             // スペースは+でエスケープする
             // String postData = "?q=mimeType='image/jpeg'";
 
@@ -275,6 +278,7 @@ int getPic(String url, uint8_t *&pic)
             return 0;
         }
     }
+    return 0;
 }
 
 void loop()
