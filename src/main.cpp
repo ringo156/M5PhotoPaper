@@ -8,6 +8,7 @@
 #include <vector>
 #include <M5EPD.h>
 #include <ArduinoJson.h>
+#include <map>
 
 #include "cert.h"
 #include "token.h"
@@ -19,15 +20,17 @@ using namespace std;
 // たぶん直接ファイルを編集するんじゃなくてどこかで設定をいじれるはず
 // #define CONFIG_ARDUHAL_LOG_DEFAULT_LEVEL 4
 
+std::map<string, string> images;
+
 const size_t capacity = 500;
 DynamicJsonDocument doc(capacity);
-DynamicJsonDocument images(2048);
+DynamicJsonDocument filter_body(2048);
 
 M5EPD_Canvas canvas(&M5.EPD);
 uint8_t pic_i = 0;
 
 String host = "www.googleapis.com";
-String dirId = "'your Google Drive Dir ID'";
+String dirId = "'Your Google Drive DirID'";
 String access_token = "";
 
 void setup()
@@ -48,6 +51,13 @@ void setup()
     canvas.setTextSize(3);
     canvas.drawString("Hello World", 45, 350);
     canvas.pushCanvas(0, 0, UPDATE_MODE_DU4);
+}
+
+string Str2str(String Str)
+{
+    char buf[40];
+    Str.toCharArray(buf, Str.length() + 1);
+    return buf;
 }
 
 String get_access_token(void)
@@ -87,7 +97,7 @@ String get_access_token(void)
 
 void drive_get(void)
 {
-    // access_token = get_access_token();
+    access_token = get_access_token();
     // Serial.println(access_token);
 
     WiFiClientSecure *client = new WiFiClientSecure;
@@ -115,24 +125,21 @@ void drive_get(void)
                 StaticJsonDocument<200> filter;
                 filter["files"][0]["id"] = true;
                 filter["files"][0]["name"] = true;
-                deserializeJson(images, body, DeserializationOption::Filter(filter));
-                serializeJsonPretty(images, Serial);
+                deserializeJson(filter_body, body, DeserializationOption::Filter(filter));
+                serializeJsonPretty(filter_body, Serial);
 
                 // doc3["files"][i]["id"];でアクセスしていってnullならreturnとか
                 // deserializeJson(images, body);
                 int i = 0;
                 while (1)
                 {
-                    String temp_id = images["files"][i]["id"];
+                    String temp_id = filter_body["files"][i]["id"];
+                    String temp_name = filter_body["files"][i]["name"];
                     if (temp_id.equals("null"))
                     {
                         break;
                     }
-                    String temp_name = images["files"][i]["name"];
-                    Serial.print("id : ");
-                    Serial.println(temp_id);
-                    Serial.print("name : ");
-                    Serial.println(temp_name);
+                    images[Str2str(temp_id)] = Str2str(temp_name);
                     i++;
                 }
 
@@ -286,6 +293,13 @@ void loop()
 
     drive_get();
     // drawPic_drive();
+    delay(100);
+    for (auto i = images.begin(); i != images.end(); i++)
+    {
+        Serial.print(i->first.c_str());
+        Serial.print(" => ");
+        Serial.println(i->second.c_str());
+    }
 
     while (1)
         ;
