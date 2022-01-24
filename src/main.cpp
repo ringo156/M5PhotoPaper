@@ -34,8 +34,6 @@ String host = "www.googleapis.com";
 String dirId = "";
 String access_token = "";
 
-// ToDo: Preferance試す
-
 Preferences prefs;
 
 void setup()
@@ -56,43 +54,16 @@ void setup()
     canvas.setTextSize(3);
     canvas.drawString("Hello World", 45, 350);
     canvas.pushCanvas(0, 0, UPDATE_MODE_DU4);
-    prefs.begin("test");
-    // uint8_t count[] = {2, 4, 6, 8};
-    // prefs.putBytes("test", count, sizeof(count));
-    // size_t cntlen = prefs.getBytesLength("test");
-    // Serial.println(cntlen);
-    // char buffer[cntlen];
-    // prefs.getBytes("test", buffer, cntlen);
-    // for (int i = 0; i < cntlen; i++)
-    // {
-    //     Serial.printf("%d ", buffer[i]);
-    //     Serial.println();
-    // }
 
-    vector<string> strList = {"apple", "peach", "banana"};
-    strList.push_back("orange");
-    uint16_t strListLength = 0;
-    for (int i = 0; i < strList.size(); i++)
-    {
-        Serial.println(strList[i].c_str());
-        strListLength += strList[i].length();
-        Serial.println(strListLength);
-    }
-    uint16_t vectsize = sizeof(std::vector<string>) + sizeof(std::string) * strList.size();
-    Serial.println(vectsize);
-    // strList.erase(strList.begin() + 2);
-    // for (int i = 0; i < strList.size(); i++)
-    // {
-    //     Serial.println(strList[i].c_str());
-    // }
+    // set random seed
+    randomSeed(analogRead(33));
 
-    // prefs.putBytes("test", &strList, vectsize + strListLength);
-    size_t nvslen = prefs.getBytesLength("test");
-    Serial.println(nvslen);
+    // set nvs
+    prefs.begin("photo");
 
-    randomSeed(analogRead(26));
-    Serial.println(analogRead(26));
-    // prefs.getBytes("test", )
+    // prefs.putString("imageid", "14bnUlcEcZdKeRcILqOyST81IO49Ca-bN");
+    String hoge = prefs.getString("imageid");
+    Serial.println(hoge);
 }
 
 string Str2str(String Str)
@@ -139,8 +110,8 @@ String get_access_token(void)
 
 void drive_files(void)
 {
-    access_token = get_access_token();
-    Serial.println(access_token);
+    // access_token = get_access_token();
+    // Serial.println(access_token);
 
     WiFiClientSecure *client = new WiFiClientSecure;
     if (client)
@@ -250,10 +221,30 @@ int getPic_drive(String image_id, uint8_t *&pic)
     client->stop();
 }
 
+String selectImageID()
+{
+    String oldID = prefs.getString("imageid");
+    // Serial.println(oldID);
+
+    auto it = images.begin();
+
+    do
+    {
+        advance(it, random(images.size()));
+        // Serial.println(it->first.c_str());
+    } while (!oldID.compareTo(it->first.c_str()));
+
+    return it->first.c_str();
+}
+
 void drawPic_drive(void)
 {
+
+    // ToDo 前回表示画像との比較
+    String imageid = selectImageID();
     uint8_t *pic = nullptr;
-    int size = getPic_drive("imageID", pic);
+
+    int size = getPic_drive(imageid, pic);
 
     Serial.print("Size : ");
     Serial.println(size);
@@ -270,6 +261,9 @@ void drawPic_drive(void)
         pic_i = 0;
     free(pic);
     pic = NULL;
+
+    // ToDo 表示した画像のIDを保存
+    prefs.putString("imageid", imageid);
 }
 
 int getPic(String url, uint8_t *&pic)
@@ -327,18 +321,11 @@ int getPic(String url, uint8_t *&pic)
 void loop()
 {
 
-    drive_files();
+    // drive_files();
 
     // drawPic_drive();
+
     delay(100);
-    for (auto i = images.begin(); i != images.end(); i++)
-    {
-        Serial.print(i->first.c_str());
-        Serial.print(" => ");
-        Serial.println(i->second.c_str());
-    }
-    // こんな感じで書けたら解決しそう
-    // prefs.putBytes("images", images, sizeof(std::map<string, string))
 
     while (1)
         ;
