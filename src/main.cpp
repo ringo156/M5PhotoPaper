@@ -9,6 +9,7 @@
 #include <M5EPD.h>
 #include <ArduinoJson.h>
 #include <map>
+#include <Preferences.h>
 
 #include "cert.h"
 #include "token.h"
@@ -30,8 +31,12 @@ M5EPD_Canvas canvas(&M5.EPD);
 uint8_t pic_i = 0;
 
 String host = "www.googleapis.com";
-String dirId = "'Your Google Drive DirID'";
+String dirId = "";
 String access_token = "";
+
+// ToDo: Preferance試す
+
+Preferences prefs;
 
 void setup()
 {
@@ -51,6 +56,43 @@ void setup()
     canvas.setTextSize(3);
     canvas.drawString("Hello World", 45, 350);
     canvas.pushCanvas(0, 0, UPDATE_MODE_DU4);
+    prefs.begin("test");
+    // uint8_t count[] = {2, 4, 6, 8};
+    // prefs.putBytes("test", count, sizeof(count));
+    // size_t cntlen = prefs.getBytesLength("test");
+    // Serial.println(cntlen);
+    // char buffer[cntlen];
+    // prefs.getBytes("test", buffer, cntlen);
+    // for (int i = 0; i < cntlen; i++)
+    // {
+    //     Serial.printf("%d ", buffer[i]);
+    //     Serial.println();
+    // }
+
+    vector<string> strList = {"apple", "peach", "banana"};
+    strList.push_back("orange");
+    uint16_t strListLength = 0;
+    for (int i = 0; i < strList.size(); i++)
+    {
+        Serial.println(strList[i].c_str());
+        strListLength += strList[i].length();
+        Serial.println(strListLength);
+    }
+    uint16_t vectsize = sizeof(std::vector<string>) + sizeof(std::string) * strList.size();
+    Serial.println(vectsize);
+    // strList.erase(strList.begin() + 2);
+    // for (int i = 0; i < strList.size(); i++)
+    // {
+    //     Serial.println(strList[i].c_str());
+    // }
+
+    // prefs.putBytes("test", &strList, vectsize + strListLength);
+    size_t nvslen = prefs.getBytesLength("test");
+    Serial.println(nvslen);
+
+    randomSeed(analogRead(26));
+    Serial.println(analogRead(26));
+    // prefs.getBytes("test", )
 }
 
 string Str2str(String Str)
@@ -95,10 +137,10 @@ String get_access_token(void)
     return access_token;
 }
 
-void drive_get(void)
+void drive_files(void)
 {
     access_token = get_access_token();
-    // Serial.println(access_token);
+    Serial.println(access_token);
 
     WiFiClientSecure *client = new WiFiClientSecure;
     if (client)
@@ -107,10 +149,8 @@ void drive_get(void)
         {
             HTTPClient https;
             Serial.println("HTTPS GET");
-            String postData = "?q=" + dirId + "+in+parents";
-
             // スペースは+でエスケープする
-            // String postData = "?q=mimeType='image/jpeg'";
+            String postData = "?q=" + dirId + "+in+parents";
 
             if (https.begin(*client, "https://" + host + "/drive/v3/files" + postData))
             {
@@ -218,7 +258,6 @@ void drawPic_drive(void)
     Serial.print("Size : ");
     Serial.println(size);
 
-    // M5.Lcd.drawJpg(pic, payload.length());
     canvas.createCanvas(540, 960);
     canvas.setTextSize(3);
     canvas.drawJpg(pic, size);
@@ -238,12 +277,10 @@ int getPic(String url, uint8_t *&pic)
     HTTPClient http;
     Serial.println(url);
     Serial.print("[HTTPS] begin...\n");
-    // M5.Lcd.println("[HTTPS] begin...");
 
     if (http.begin(url))
     {
         Serial.print("[HTTPS] GET...\n");
-        // M5.Lcd.println("[HTTPS] GET...");
         int httpCode = http.GET();
         Serial.println(httpCode);
         size_t size = http.getSize();
@@ -277,7 +314,6 @@ int getPic(String url, uint8_t *&pic)
             // String payload = http.getString();
             // Serial.println("Content-Length: " + String(payload.length()));
             // Serial.println(payload);
-            // M5.Lcd.println(buf);
         }
         else
         {
@@ -291,7 +327,8 @@ int getPic(String url, uint8_t *&pic)
 void loop()
 {
 
-    drive_get();
+    drive_files();
+
     // drawPic_drive();
     delay(100);
     for (auto i = images.begin(); i != images.end(); i++)
@@ -300,6 +337,8 @@ void loop()
         Serial.print(" => ");
         Serial.println(i->second.c_str());
     }
+    // こんな感じで書けたら解決しそう
+    // prefs.putBytes("images", images, sizeof(std::map<string, string))
 
     while (1)
         ;
