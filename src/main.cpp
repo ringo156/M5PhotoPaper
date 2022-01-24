@@ -17,10 +17,6 @@
 
 using namespace std;
 
-// sdkconfig.hでログを表示できる
-// たぶん直接ファイルを編集するんじゃなくてどこかで設定をいじれるはず
-// #define CONFIG_ARDUHAL_LOG_DEFAULT_LEVEL 4
-
 std::map<string, string> images;
 
 const size_t capacity = 500;
@@ -61,9 +57,9 @@ void setup()
     // set nvs
     prefs.begin("photo");
 
-    // prefs.putString("imageid", "14bnUlcEcZdKeRcILqOyST81IO49Ca-bN");
-    String hoge = prefs.getString("imageid");
-    Serial.println(hoge);
+    // prefs.putString("imageid", "dummyid");
+    // String hoge = prefs.getString("imageid");
+    // Serial.println(hoge);
 }
 
 string Str2str(String Str)
@@ -110,7 +106,7 @@ String get_access_token(void)
 
 void drive_files(void)
 {
-    // access_token = get_access_token();
+    access_token = get_access_token();
     // Serial.println(access_token);
 
     WiFiClientSecure *client = new WiFiClientSecure;
@@ -120,7 +116,7 @@ void drive_files(void)
         {
             HTTPClient https;
             Serial.println("HTTPS GET");
-            // スペースは+でエスケープする
+
             String postData = "?q=" + dirId + "+in+parents";
 
             if (https.begin(*client, "https://" + host + "/drive/v3/files" + postData))
@@ -139,7 +135,6 @@ void drive_files(void)
                 deserializeJson(filter_body, body, DeserializationOption::Filter(filter));
                 serializeJsonPretty(filter_body, Serial);
 
-                // doc3["files"][i]["id"];でアクセスしていってnullならreturnとか
                 // deserializeJson(images, body);
                 int i = 0;
                 while (1)
@@ -240,7 +235,6 @@ String selectImageID()
 void drawPic_drive(void)
 {
 
-    // ToDo 前回表示画像との比較
     String imageid = selectImageID();
     uint8_t *pic = nullptr;
 
@@ -262,7 +256,6 @@ void drawPic_drive(void)
     free(pic);
     pic = NULL;
 
-    // ToDo 表示した画像のIDを保存
     prefs.putString("imageid", imageid);
 }
 
@@ -321,15 +314,8 @@ int getPic(String url, uint8_t *&pic)
 void loop()
 {
 
-    // drive_files();
+    drive_files();
+    drawPic_drive();
 
-    // drawPic_drive();
-
-    delay(100);
-
-    while (1)
-        ;
-
-    // drawPic();
-    delay(5000);
+    delay(7200000);
 }
