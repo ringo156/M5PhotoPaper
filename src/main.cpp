@@ -24,7 +24,6 @@ DynamicJsonDocument doc(capacity);
 DynamicJsonDocument filter_body(2048);
 
 M5EPD_Canvas canvas(&M5.EPD);
-uint8_t pic_i = 0;
 
 String host = "www.googleapis.com";
 String dirId = "";
@@ -250,9 +249,6 @@ void drawPic_drive(void)
 
     canvas.pushCanvas(0, 0, UPDATE_MODE_GC16);
 
-    pic_i++;
-    if (pic_i == 9)
-        pic_i = 0;
     free(pic);
     pic = NULL;
 
