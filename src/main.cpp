@@ -253,6 +253,7 @@ void drawPic_drive(void)
     pic = NULL;
 
     prefs.putString("imageid", imageid);
+    delay(500);
 }
 
 int getPic(String url, uint8_t *&pic)
@@ -313,5 +314,8 @@ void loop()
     drive_files();
     drawPic_drive();
 
-    delay(7200000);
+    esp_sleep_enable_timer_wakeup(2 * 60 * 60 * 1000000);
+    Serial.println("Deep Seep Start");
+    esp_deep_sleep_start();
+
 }
